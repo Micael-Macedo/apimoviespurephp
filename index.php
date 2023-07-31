@@ -4,16 +4,23 @@ $url = $_SERVER['REQUEST_URI'];
 $fragUrl  = explode('/', $url);
 $body = json_decode(file_get_contents('php://input'));
 $header = json_encode(getallheaders());
-$filtro = ['offset' => 20, 'page' => 1, 'sortDir' => 'desc'];
+
+$filtro = ['offset' => 0, 'limit' => 10, 'sortDir' => 'desc'];
 $filtro = (object) $filtro;
+if(isset($body->pageSize)){
+    $filtro->limit = $body->pageSize;
+}else{
+    if($fragUrl[3] == 'movies'){
+        $filtro->limit = 4;
+    }
+}
+if(isset($body->page)){
+    $filtro->offset = $filtro->limit * ($body->page - 1);
+}
+
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         if(count($fragUrl) == 4){
-            if(!isset($body->pageSize)){
-                $filtro->offset = 20;
-            }else{
-                $filtro->offset = $body->pageSize;
-            }
             echo json_encode(getAllItems($fragUrl[3], $filtro));
         }else{
             echo json_encode(getItem($fragUrl[3], $filtro, $fragUrl[4]));

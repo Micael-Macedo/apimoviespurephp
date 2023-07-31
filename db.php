@@ -20,28 +20,30 @@ function getSql($sql){
 }
 
 function getAllItems($object, $filter){
-    $sql = "SELECT * FROM $object";
-    if($object == 'movies'){
-        return getSql($sql);
-    }
+    $sql = "SELECT * FROM $object limit $filter->limit offset $filter->offset";
+    return getSql($sql);
 }
 function getItem($object, $filter, $id){
     $sql = "SELECT * FROM $object where $object". ".id = $id";
     if($object == 'movies'){
         $movie = getSql($sql);
-        $sql = "SELECT * FROM credit left join artists on artists.id = credit.artist_id where movie_id = $id";
+        $sql = "SELECT * FROM credit left join artists on artists.id = credit.artist_id where movie_id = $id ";
         $artists = getSql($sql);
         $movie->credits = $artists;
         return $movie;
     }
     if($object == 'artists'){
-        $sql = $sql . " INNER JOIN credit ON credit.artist_id = artists.id INNER JOIN movies on movies.id = credit.movie_id where artists.id = $id";
-        return getSql($sql);
+        $artist = getSql($sql);
+        $sql = "SELECT * FROM credit left join movies on movies.id = credit.movie_id where artist_id = $id ";
+        $movies = getSql($sql);
+        $artist->movies = $movies;
+        return $artist;
     }
     if($object == 'reviews'){
-        $sql = $sql . " INNER JOIN movies ON reviews.movie_id = movies.id offset(".$filter->offset . ")";
+        $sql = "SELECT * FROM $object where movie_id = $id limit $filter->limit offset $filter->offset";
         return getSql($sql);
     }
+    return getSql($sql);
 }
 
 function getToken($token){
