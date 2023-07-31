@@ -62,11 +62,11 @@ function createUser($user){
     if(getSql($sql)){
         global $jwt;
         $sql = "SELECT * FROM users where email = '$user->email' and password = '$user->password'";
-        $userDb = json_decode(getSql($sql));
+        $userDb = getSql($sql);
         $token = $jwt->generateToken();
         if(isset($userDb->id)){
-
             createToken($userDb->id, $token);
+            setcookie('user_id',  $userDb->id);
             $data = ['token' => $token, 'user_id' => $userDb->id];
             return (object) $data;
         }
@@ -75,31 +75,29 @@ function createUser($user){
 function postLogin($user){
     $user->password = crypt($user->password, "SENHA");
     $sql = "SELECT * FROM users where email = '$user->email' and password = '$user->password'";
-    $userDb = json_decode(getSql($sql));
+    $userDb = getSql($sql);
     if(!is_bool($userDb)){
         global $jwt;
         $token = $jwt->generateToken();
         session_regenerate_id();
         updateToken($userDb->id, $token);
         $data = ['token' => $token, 'user_id' => $userDb->id];
+        setcookie('user_id',  $userDb->id);
         return (object) $data;
     }
 }
 function updateToken($user, $token){
     $sql = "SELECT * FROM accesstoken where user_id = $user";
-    $tokenDb = json_decode(getSql($sql));
+    $tokenDb = getSql($sql);
     $sql = "UPDATE accesstoken SET user_id = $user, tokenString = '$token' where id = $tokenDb->id";
-    var_dump($sql);
     return getSql($sql);
 }
 function createToken($user, $token){
     $sql = "INSERT INTO accesstoken(user_id, tokenString) values ($user, '$token')";
-    var_dump($sql);
     return getSql($sql);
 }
-function postCadastro($user, $review){}
 function postReview($user, $movieId, $review){
-    $sql = "INSERT INTO reviews(movie_id, user_id, content, stars) values('$movieId', '$user->id', '$review->content', '$review->stars')";
+    $sql = "INSERT INTO reviews(movie_id, user_id, content, stars) values('$movieId', '$user', '$review->content', '$review->stars')";
     return getSql($sql);
 }
 function updateReview($user,$movieId, $review){

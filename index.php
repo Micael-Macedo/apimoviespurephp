@@ -54,18 +54,18 @@ switch ($_SERVER['REQUEST_METHOD']) {
         if($url == '/api/v1/auth/signup'){
             $user = ['password' => $body->password, 'email' => $body->email, 'name' => $body->name, 'username' => $body->username];
             $result = createUser((object) $user);
-            setcookie('user_id',  $result->user_id);
             echo json_encode(['token' => $result->token ]);
         }
         if($url == '/api/v1/signin'){
             $user = ['password' => $body->password, 'email' => $body->email];
             $result = postLogin((object) $user);
-            setcookie('user_id',  $result->user_id);
             echo json_encode(['token' => $result->token ]);
         }
         if($fragUrl[3] == 'reviews' && $fragUrl[4] != 'evaluations'){
             $review = ['content' => $body->content, 'stars' => $body->stars];
-            postReview($user, $fragUrl[4], $review);
+            postReview($_COOKIE['user_id'], $fragUrl[4], (object) $review);
+        }else{
+
         }
         break;
         
