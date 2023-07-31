@@ -20,7 +20,7 @@ function getSql($sql){
 }
 
 function getAllItems($object, $filter){
-    $sql = "SELECT * FROM $object limit $filter->limit offset $filter->offset";
+    $sql = "SELECT * FROM $object order by ($filter->sortBy) $filter->sortDir limit $filter->limit offset $filter->offset";
     return getSql($sql);
 }
 function getItem($object, $filter, $id){

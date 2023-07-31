@@ -5,7 +5,7 @@ $fragUrl  = explode('/', $url);
 $body = json_decode(file_get_contents('php://input'));
 $header = json_encode(getallheaders());
 
-$filtro = ['offset' => 0, 'limit' => 10, 'sortDir' => 'desc'];
+$filtro = ['offset' => 0, 'limit' => 10, 'sortDir' => 'desc', 'sortBy' => 'null'];
 $filtro = (object) $filtro;
 if(isset($body->pageSize)){
     $filtro->limit = $body->pageSize;
@@ -16,6 +16,29 @@ if(isset($body->pageSize)){
 }
 if(isset($body->page)){
     $filtro->offset = $filtro->limit * ($body->page - 1);
+}
+if(isset($body->sortDir)){
+    $filtro->sortDir = $body->sortDir;
+}else{
+    if($fragUrl[3] == 'artists'){
+        $filtro->sortDir == 'asc';
+    }
+}
+if(isset($body->sortBy)){
+    $filtro->sortBy = $body->sortBy;
+}else{
+    if($fragUrl[3] == 'artists'){
+        $filtro->sortBy = 'name';
+    }
+    if($fragUrl[3] == 'movies'){
+        $filtro->sortBy = 'releaseDate';
+    }
+    if($fragUrl[3] == 'reviews'){
+        $filtro->sortBy = 'stars';
+    }
+    if($fragUrl[3] == 'genres'){
+        $filtro->sortBy = 'title';
+    }
 }
 
 switch ($_SERVER['REQUEST_METHOD']) {
