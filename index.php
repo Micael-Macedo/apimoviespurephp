@@ -3,7 +3,22 @@ include_once('db.php');
 $url = $_SERVER['REQUEST_URI'];
 $fragUrl  = explode('/', $url);
 $body = json_decode(file_get_contents('php://input'));
-$header = json_encode(getallheaders());
+$header =  (object) getallheaders();
+function validar($header){
+    if(isset($header->Authorization)){
+        if(validarToken($header->Authorization)){
+            return true;
+        }else{
+            sendMessage('Invalid token');
+            http_response_code(403);
+            return false;
+        }
+    }else{
+        sendMessage('Unauthenticated user');
+        http_response_code(401);
+        return false;
+    }
+}
 
 $filtro = ['offset' => 0, 'limit' => 10, 'sortDir' => 'desc', 'sortBy' => 'null'];
 $filtro = (object) $filtro;
@@ -40,13 +55,18 @@ if(isset($body->sortBy)){
         $filtro->sortBy = 'title';
     }
 }
-
+function sendMessage($message){
+    $dataMessage = ['message' => $message];
+    echo json_encode($dataMessage);
+}
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
-        if(count($fragUrl) == 4){
-            echo json_encode(getAllItems($fragUrl[3], $filtro));
-        }else{
-            echo json_encode(getItem($fragUrl[3], $filtro, $fragUrl[4]));
+        if(validar($header) == true){
+            if(count($fragUrl) == 4){
+                echo json_encode(getAllItems($fragUrl[3], $filtro));
+            }else{
+                echo json_encode(getItem($fragUrl[3], $filtro, $fragUrl[4]));
+            }
         }
         break;
     
@@ -61,27 +81,35 @@ switch ($_SERVER['REQUEST_METHOD']) {
             $result = postLogin((object) $user);
             echo json_encode(['token' => $result->token ]);
         }
-        if($fragUrl[3] == 'reviews' && $fragUrl[4] != 'evaluations'){
-            $review = ['content' => $body->content, 'stars' => $body->stars];
-            postReview($_COOKIE['user_id'], $fragUrl[4], (object) $review);
-        }else{
-
+        if(validar($header) == true){
+            if($fragUrl[3] == 'reviews' && $fragUrl[4] != 'evaluations'){
+                $review = ['content' => $body->content, 'stars' => $body->stars];
+                postReview($_COOKIE['user_id'], $fragUrl[4], (object) $review);
+            }
+            if($fragUrl[3] == 'reviews' && $fragUrl[4] == 'evaluations'){
+                $result = postEvaluation($_COOKIE['user_id'], $fragUrl[5], $body->positive);
+            }
         }
+        
         break;
         
         case 'DELETE':
-            # code...
-            if($url == '/api/v1/auth/signout'){
-
+            if(validar($header) == true){
+                if($url == '/api/v1/auth/signout'){
+                    
+                }
+                if($fragUrl[3] == 'reviews' && $fragUrl[4] != 'evaluations'){
+                    $review = ['content' => $body->content, 'stars' => $body->stars];
+                    postReview($_COOKIE['user_id'], $fragUrl[4], (object) $review);
+                }
+                if($fragUrl[3] == 'reviews' && $fragUrl[4] == 'evaluations'){
+                    $result = postEvaluation($_COOKIE['user_id'], $fragUrl[5], $body->positive);
+                }
             }
         break;
     
-    case 'PUT':
-        # code...
-        break;
-    
     default:
-        # code...
+        http_response_code(404);
         break;
 }
 
